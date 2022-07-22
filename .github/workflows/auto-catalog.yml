@@ -1,0 +1,37 @@
+name: Auto Catalog Update
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  auto-catalog-update:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: Add Git Submodules
+      env:
+        BASE_URL: 'https://api.github.com/orgs/fr-platform/repos'
+        USERNAME: ${{ env.GITHUB_ACTOR }}
+        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        repos=$(curl -s -u $USERNAME:$TOKEN -H 'Accept: application/vnd.github.v3+json' $BASE_URL \
+        | jq '.[]| [.svn_url] | @csv' \
+        | grep -E 'https://github\.com/fr-platform/terraform-github-.+')
+        for i in $repos
+        do
+          git submodule add $(echo $i | tr --delete '\\"') || echo $?
+        done
+      shell: bash
+
+    - name: Commit Update
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: 'Catalog Auto Update'
+
