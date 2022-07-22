@@ -1,3 +1,0 @@
-[submodule "terraform-github-modules"]
-	path = terraform-github-modules
-	url = https://github.com/fr-platform/terraform-github-modules
